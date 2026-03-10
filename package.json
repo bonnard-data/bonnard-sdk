@@ -1,6 +1,6 @@
 {
   "name": "@bonnard/sdk",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "Bonnard SDK - query your semantic layer from any JavaScript or TypeScript app",
   "type": "module",
   "main": "dist/index.js",
