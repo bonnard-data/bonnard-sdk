@@ -1,0 +1,76 @@
+{
+  "name": "@bonnard/sdk",
+  "version": "0.4.6",
+  "description": "Bonnard SDK - query your semantic layer from any JavaScript or TypeScript app",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./ai": {
+      "import": "./dist/ai/index.js",
+      "types": "./dist/ai/index.d.ts"
+    },
+    "./ai/vercel": {
+      "import": "./dist/ai/vercel.js",
+      "types": "./dist/ai/vercel.d.ts"
+    },
+    "./ai/langchain": {
+      "import": "./dist/ai/langchain.js",
+      "types": "./dist/ai/langchain.d.ts"
+    },
+    "./browser": {
+      "default": "./dist/bonnard.iife.js"
+    }
+  },
+  "unpkg": "dist/bonnard.iife.js",
+  "jsdelivr": "dist/bonnard.iife.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc && esbuild src/browser.ts --bundle --format=iife --global-name=Bonnard --outfile=dist/bonnard.iife.js --minify --sourcemap --target=es2020",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {},
+  "peerDependencies": {
+    "zod": "^3.0.0",
+    "@langchain/core": ">=0.2.0"
+  },
+  "peerDependenciesMeta": {
+    "zod": {
+      "optional": true
+    },
+    "@langchain/core": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "esbuild": "^0.27.3",
+    "typescript": "^5.3.3",
+    "zod": "^3.24.0",
+    "ai": "^6.0.0",
+    "@langchain/core": "^1.0.0"
+  },
+  "keywords": [
+    "bonnard",
+    "semantic-layer",
+    "analytics",
+    "mcp",
+    "cube",
+    "dashboard",
+    "metrics",
+    "ai"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bonnard-data/bonnard-sdk.git"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
