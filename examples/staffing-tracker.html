@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staffing & Absence Tracker | Avi Medical</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #1e3a5f 0%, #0d1b2a 100%);
+      min-height: 100vh;
+      color: #e0e0e0;
+      padding: 24px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .header .subtitle {
+      font-size: 14px;
+      color: #8ba3c7;
+      margin-top: 4px;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.1);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4ade80;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Summary Cards */
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 20px;
+      backdrop-filter: blur(10px);
+    }
+
+    .card-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #8ba3c7;
+      margin-bottom: 8px;
+    }
+
+    .card-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .card-value.negative {
+      color: #f87171;
+    }
+
+    .card-value.warning {
+      color: #fbbf24;
+    }
+
+    .card-value.positive {
+      color: #4ade80;
+    }
+
+    .card-detail {
+      font-size: 13px;
+      color: #8ba3c7;
+      margin-top: 4px;
+    }
+
+    /* Charts Grid */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .chart-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .chart-card h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .chart-card .chart-subtitle {
+      font-size: 13px;
+      color: #8ba3c7;
+      margin-bottom: 20px;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 280px;
+    }
+
+    /* Alert Banner */
+    .alert-banner {
+      background: rgba(251, 191, 36, 0.15);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      display: none;
+    }
+
+    .alert-banner.visible {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .alert-icon {
+      font-size: 20px;
+    }
+
+    .alert-content {
+      flex: 1;
+    }
+
+    .alert-title {
+      font-weight: 600;
+      color: #fbbf24;
+      margin-bottom: 2px;
+    }
+
+    .alert-message {
+      font-size: 13px;
+      color: #d4a574;
+    }
+
+    /* Practice Table */
+    .table-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 24px;
+      overflow: hidden;
+    }
+
+    .table-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .table-header h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      text-align: left;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #8ba3c7;
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    td {
+      padding: 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-size: 14px;
+    }
+
+    tr:hover {
+      background: rgba(255,255,255,0.03);
+    }
+
+    .practice-name {
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .status-pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .status-pill.critical {
+      background: rgba(248, 113, 113, 0.2);
+      color: #f87171;
+    }
+
+    .status-pill.warning {
+      background: rgba(251, 191, 36, 0.2);
+      color: #fbbf24;
+    }
+
+    .status-pill.good {
+      background: rgba(74, 222, 128, 0.2);
+      color: #4ade80;
+    }
+
+    .bar-cell {
+      width: 120px;
+    }
+
+    .mini-bar {
+      height: 8px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .mini-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 200px;
+      color: #8ba3c7;
+    }
+
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 2px solid rgba(255,255,255,0.1);
+      border-top-color: #4ade80;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 12px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .error-message {
+      color: #f87171;
+    }
+
+    @media (max-width: 1200px) {
+      .summary-cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .summary-cards {
+        grid-template-columns: 1fr;
+      }
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1>Staffing & Absence Tracker</h1>
+      <div class="subtitle">Clinic capacity and workforce availability</div>
+    </div>
+    <div class="status-badge">
+      <div class="status-dot"></div>
+      <span>Live data from Bonnard</span>
+    </div>
+  </div>
+
+  <div id="alert-banner" class="alert-banner">
+    <span class="alert-icon">⚠️</span>
+    <div class="alert-content">
+      <div id="alert-title" class="alert-title"></div>
+      <div id="alert-message" class="alert-message"></div>
+    </div>
+  </div>
+
+  <div class="summary-cards" id="summary-cards">
+    <div class="card">
+      <div class="card-label">Total FTE Gap</div>
+      <div class="card-value" id="total-fte-gap">--</div>
+      <div class="card-detail" id="fte-gap-detail">Loading...</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Avg Absence Rate</div>
+      <div class="card-value" id="avg-absence">--</div>
+      <div class="card-detail" id="absence-detail">Loading...</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Avg Utilization</div>
+      <div class="card-value" id="avg-utilization">--</div>
+      <div class="card-detail" id="utilization-detail">Loading...</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Practices Needing Attention</div>
+      <div class="card-value" id="attention-count">--</div>
+      <div class="card-detail" id="attention-detail">Loading...</div>
+    </div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h3>Staffing Gap by Practice</h3>
+      <div class="chart-subtitle">FTE Actual vs Weekly Goal - identify understaffed locations</div>
+      <div class="chart-container">
+        <canvas id="staffing-chart"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <h3>Absence Breakdown</h3>
+      <div class="chart-subtitle">Vacation vs Sickness hours by practice</div>
+      <div class="chart-container">
+        <canvas id="absence-chart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h3>Burnout Risk Matrix</h3>
+      <div class="chart-subtitle">High utilization + high absence may indicate overwork</div>
+      <div class="chart-container">
+        <canvas id="burnout-chart"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <h3>Absence Rate Trend</h3>
+      <div class="chart-subtitle">Absence rate comparison across practices</div>
+      <div class="chart-container">
+        <canvas id="trend-chart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-header">
+      <h3>Practice Details</h3>
+    </div>
+    <div id="table-container">
+      <div class="loading">
+        <div class="spinner"></div>
+        Loading practice data...
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Bonnard SDK - Inline Client
+    class BonnardClient {
+      constructor(config) {
+        this.apiKey = config.apiKey;
+        this.baseUrl = config.baseUrl || 'https://semantic-git-develop-bonnard.vercel.app';
+      }
+
+      async query(sqlQuery) {
+        const response = await fetch(`${this.baseUrl}/api/cube/query`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.apiKey}`
+          },
+          body: JSON.stringify({ sql: sqlQuery })
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Query failed');
+        }
+
+        return response.json();
+      }
+    }
+
+    // Initialize client
+    const bonnard = new BonnardClient({
+      apiKey: 'bon_pk_YOUR_KEY_HERE'
+    });
+
+    // Chart instances
+    let staffingChart, absenceChart, burnoutChart, trendChart;
+
+    // Color palette
+    const colors = {
+      blue: 'rgba(59, 130, 246, 0.8)',
+      blueLight: 'rgba(59, 130, 246, 0.3)',
+      green: 'rgba(74, 222, 128, 0.8)',
+      greenLight: 'rgba(74, 222, 128, 0.3)',
+      yellow: 'rgba(251, 191, 36, 0.8)',
+      yellowLight: 'rgba(251, 191, 36, 0.3)',
+      red: 'rgba(248, 113, 113, 0.8)',
+      redLight: 'rgba(248, 113, 113, 0.3)',
+      purple: 'rgba(168, 85, 247, 0.8)',
+      purpleLight: 'rgba(168, 85, 247, 0.3)',
+    };
+
+    // Chart.js defaults
+    Chart.defaults.color = '#8ba3c7';
+    Chart.defaults.borderColor = 'rgba(255,255,255,0.1)';
+
+    // Utility to safely set text content
+    function setText(id, text) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = text;
+    }
+
+    function setClass(id, className) {
+      const el = document.getElementById(id);
+      if (el) el.className = className;
+    }
+
+    async function loadDashboard() {
+      try {
+        // Query clinic capacity data with aggregation
+        // Note: Cube SQL requires explicit aggregation matching measure types:
+        // - SUM() for type:sum measures
+        // - MAX() for type:max measures
+        // - AVG() for type:number (calculated) measures
+        const result = await bonnard.query(`
+          SELECT
+            practice_name,
+            SUM(md_fte_actual) as md_fte_actual,
+            MAX(md_fte_weekly_goal) as md_fte_weekly_goal,
+            SUM(vacation_hours) as vacation_hours,
+            SUM(sickness_hours) as sickness_hours,
+            AVG(absence_rate) as absence_rate,
+            AVG(utilization) as utilization
+          FROM clinic_capacity
+          GROUP BY practice_name
+          ORDER BY practice_name
+        `);
+
+        // Transform array data to objects (SQL API returns arrays)
+        const schema = result.schema.map(s => s.name);
+        const practices = result.data
+          .map(row => {
+            const obj = {};
+            schema.forEach((col, i) => {
+              // Parse numeric values (they may come as strings)
+              const val = row[i];
+              obj[col] = col === 'practice_name' ? val : parseFloat(val) || 0;
+            });
+            return obj;
+          })
+          .filter(p => p.practice_name); // Filter out rows with null practice names
+        console.log('Loaded practices:', practices);
+
+        // Calculate summary metrics
+        updateSummaryCards(practices);
+
+        // Check for alerts
+        showAlerts(practices);
+
+        // Render charts
+        renderStaffingChart(practices);
+        renderAbsenceChart(practices);
+        renderBurnoutChart(practices);
+        renderTrendChart(practices);
+
+        // Render table
+        renderTable(practices);
+
+      } catch (error) {
+        console.error('Dashboard error:', error);
+        const container = document.getElementById('table-container');
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'loading error-message';
+        errorDiv.textContent = 'Error loading data: ' + error.message;
+        container.replaceChildren(errorDiv);
+      }
+    }
+
+    function updateSummaryCards(practices) {
+      // Filter to active practices (with goals)
+      const activePractices = practices.filter(p => p.md_fte_weekly_goal > 0);
+
+      // Total FTE Gap
+      const totalActual = practices.reduce((sum, p) => sum + (p.md_fte_actual || 0), 0);
+      const totalGoal = activePractices.reduce((sum, p) => sum + (p.md_fte_weekly_goal || 0), 0);
+      const fteGap = totalActual - totalGoal;
+
+      setText('total-fte-gap', fteGap >= 0 ? '+' + fteGap.toFixed(0) : fteGap.toFixed(0));
+      setClass('total-fte-gap', 'card-value ' + (fteGap >= 0 ? 'positive' : 'negative'));
+      setText('fte-gap-detail', totalActual.toFixed(0) + ' actual / ' + totalGoal.toFixed(0) + ' goal');
+
+      // Avg Absence Rate
+      const avgAbsence = practices.reduce((sum, p) => sum + (p.absence_rate || 0), 0) / practices.length;
+      setText('avg-absence', (avgAbsence * 100).toFixed(0) + '%');
+      setClass('avg-absence', 'card-value ' + (avgAbsence > 0.25 ? 'warning' : 'positive'));
+      setText('absence-detail', avgAbsence > 0.25 ? 'Above 25% threshold' : 'Within normal range');
+
+      // Avg Utilization
+      const avgUtil = activePractices.reduce((sum, p) => sum + (p.utilization || 0), 0) / activePractices.length;
+      setText('avg-utilization', (avgUtil * 100).toFixed(0) + '%');
+      setClass('avg-utilization', 'card-value ' + (avgUtil > 0.9 ? 'warning' : avgUtil < 0.7 ? 'negative' : 'positive'));
+      setText('utilization-detail', avgUtil > 0.9 ? 'High - monitor for burnout' : avgUtil < 0.7 ? 'Low - capacity available' : 'Healthy range');
+
+      // Practices needing attention
+      const needsAttention = practices.filter(p => {
+        const gap = (p.md_fte_actual || 0) - (p.md_fte_weekly_goal || 0);
+        return (p.md_fte_weekly_goal > 0 && gap < -0.5) || p.absence_rate > 0.3;
+      });
+
+      setText('attention-count', needsAttention.length.toString());
+      setClass('attention-count', 'card-value ' + (needsAttention.length > 0 ? 'warning' : 'positive'));
+      setText('attention-detail', needsAttention.length > 0
+        ? needsAttention.map(p => p.practice_name).join(', ')
+        : 'All practices healthy');
+    }
+
+    function showAlerts(practices) {
+      const criticalPractices = practices.filter(p => {
+        const gap = (p.md_fte_actual || 0) - (p.md_fte_weekly_goal || 0);
+        return p.md_fte_weekly_goal > 0 && gap < -1;
+      });
+
+      const alertBanner = document.getElementById('alert-banner');
+      if (criticalPractices.length > 0) {
+        alertBanner.classList.add('visible');
+        setText('alert-title', criticalPractices.length + ' Practice' + (criticalPractices.length > 1 ? 's' : '') + ' Significantly Understaffed');
+
+        const alertMessages = criticalPractices.map(p => {
+          const gap = (p.md_fte_actual || 0) - (p.md_fte_weekly_goal || 0);
+          return p.practice_name + ' (' + gap.toFixed(1) + ' FTE gap)';
+        });
+        setText('alert-message', alertMessages.join(' • '));
+      }
+    }
+
+    function renderStaffingChart(practices) {
+      const ctx = document.getElementById('staffing-chart').getContext('2d');
+
+      // Sort by FTE gap (most understaffed first)
+      const sorted = [...practices]
+        .filter(p => p.md_fte_weekly_goal > 0)
+        .sort((a, b) => {
+          const gapA = (a.md_fte_actual || 0) - (a.md_fte_weekly_goal || 0);
+          const gapB = (b.md_fte_actual || 0) - (b.md_fte_weekly_goal || 0);
+          return gapA - gapB;
+        });
+
+      staffingChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: sorted.map(p => p.practice_name),
+          datasets: [
+            {
+              label: 'FTE Actual',
+              data: sorted.map(p => p.md_fte_actual || 0),
+              backgroundColor: colors.blue,
+              borderRadius: 4,
+            },
+            {
+              label: 'FTE Goal',
+              data: sorted.map(p => p.md_fte_weekly_goal || 0),
+              backgroundColor: colors.greenLight,
+              borderColor: colors.green,
+              borderWidth: 2,
+              borderRadius: 4,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: { usePointStyle: true, padding: 20 }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: 'rgba(255,255,255,0.05)' }
+            },
+            x: {
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    function renderAbsenceChart(practices) {
+      const ctx = document.getElementById('absence-chart').getContext('2d');
+
+      // Sort by total absence hours
+      const sorted = [...practices].sort((a, b) => {
+        const totalA = (a.vacation_hours || 0) + (a.sickness_hours || 0);
+        const totalB = (b.vacation_hours || 0) + (b.sickness_hours || 0);
+        return totalB - totalA;
+      });
+
+      absenceChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: sorted.map(p => p.practice_name),
+          datasets: [
+            {
+              label: 'Vacation Hours',
+              data: sorted.map(p => p.vacation_hours || 0),
+              backgroundColor: colors.purple,
+              borderRadius: 4,
+            },
+            {
+              label: 'Sickness Hours',
+              data: sorted.map(p => p.sickness_hours || 0),
+              backgroundColor: colors.red,
+              borderRadius: 4,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: { usePointStyle: true, padding: 20 }
+            }
+          },
+          scales: {
+            x: { stacked: true, grid: { display: false } },
+            y: {
+              stacked: true,
+              beginAtZero: true,
+              grid: { color: 'rgba(255,255,255,0.05)' }
+            }
+          }
+        }
+      });
+    }
+
+    function renderBurnoutChart(practices) {
+      const ctx = document.getElementById('burnout-chart').getContext('2d');
+
+      // Only include active practices
+      const activePractices = practices.filter(p => p.md_fte_weekly_goal > 0);
+
+      burnoutChart = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+          datasets: [{
+            label: 'Practices',
+            data: activePractices.map(p => ({
+              x: (p.utilization || 0) * 100,
+              y: (p.absence_rate || 0) * 100,
+              label: p.practice_name
+            })),
+            backgroundColor: activePractices.map(p => {
+              const util = p.utilization || 0;
+              const absence = p.absence_rate || 0;
+              if (util > 0.85 && absence > 0.25) return colors.red;
+              if (util > 0.85 || absence > 0.25) return colors.yellow;
+              return colors.green;
+            }),
+            pointRadius: 12,
+            pointHoverRadius: 14,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => {
+                  const point = ctx.raw;
+                  return point.label + ': ' + point.x.toFixed(0) + '% util, ' + point.y.toFixed(0) + '% absence';
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              title: { display: true, text: 'Utilization %' },
+              min: 0,
+              max: 100,
+              grid: { color: 'rgba(255,255,255,0.05)' }
+            },
+            y: {
+              title: { display: true, text: 'Absence Rate %' },
+              min: 0,
+              max: 50,
+              grid: { color: 'rgba(255,255,255,0.05)' }
+            }
+          }
+        }
+      });
+    }
+
+    function renderTrendChart(practices) {
+      const ctx = document.getElementById('trend-chart').getContext('2d');
+
+      // Sort by absence rate
+      const sorted = [...practices].sort((a, b) => (b.absence_rate || 0) - (a.absence_rate || 0));
+
+      trendChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: sorted.map(p => p.practice_name),
+          datasets: [{
+            label: 'Absence Rate',
+            data: sorted.map(p => (p.absence_rate || 0) * 100),
+            backgroundColor: sorted.map(p => {
+              const rate = p.absence_rate || 0;
+              if (rate > 0.3) return colors.red;
+              if (rate > 0.2) return colors.yellow;
+              return colors.green;
+            }),
+            borderRadius: 4,
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+              max: 40,
+              grid: { color: 'rgba(255,255,255,0.05)' },
+              ticks: { callback: (v) => v + '%' }
+            },
+            y: {
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    function getStatus(practice) {
+      const gap = (practice.md_fte_actual || 0) - (practice.md_fte_weekly_goal || 0);
+      const absenceRate = practice.absence_rate || 0;
+      const utilization = practice.utilization || 0;
+
+      // Discontinued practice
+      if (practice.md_fte_weekly_goal === 0) {
+        return { label: 'Inactive', statusClass: 'warning' };
+      }
+
+      // Critical: significantly understaffed or very high absence
+      if (gap < -1 || absenceRate > 0.35) {
+        return { label: 'Critical', statusClass: 'critical' };
+      }
+
+      // Warning: slightly understaffed, high absence, or potential burnout
+      if (gap < -0.5 || absenceRate > 0.25 || (utilization > 0.9 && absenceRate > 0.2)) {
+        return { label: 'Warning', statusClass: 'warning' };
+      }
+
+      return { label: 'Healthy', statusClass: 'good' };
+    }
+
+    function getStatusScore(practice) {
+      const status = getStatus(practice);
+      if (status.statusClass === 'critical') return 0;
+      if (status.statusClass === 'warning') return 1;
+      return 2;
+    }
+
+    function getBarColor(value, thresholds) {
+      if (value > thresholds.high) return thresholds.highColor;
+      if (value > thresholds.medium) return thresholds.mediumColor;
+      return thresholds.lowColor;
+    }
+
+    function renderTable(practices) {
+      const container = document.getElementById('table-container');
+
+      // Sort by status (critical first, then warning, then good)
+      const sorted = [...practices].sort((a, b) => {
+        const scoreA = getStatusScore(a);
+        const scoreB = getStatusScore(b);
+        return scoreA - scoreB;
+      });
+
+      // Create table structure using DOM methods
+      const table = document.createElement('table');
+
+      // Header
+      const thead = document.createElement('thead');
+      const headerRow = document.createElement('tr');
+      const headers = ['Practice', 'Status', 'FTE Actual', 'FTE Goal', 'Gap', 'Vacation Hrs', 'Sickness Hrs', 'Absence Rate', 'Utilization'];
+      headers.forEach(text => {
+        const th = document.createElement('th');
+        th.textContent = text;
+        headerRow.appendChild(th);
+      });
+      thead.appendChild(headerRow);
+      table.appendChild(thead);
+
+      // Body
+      const tbody = document.createElement('tbody');
+      sorted.forEach(p => {
+        const gap = (p.md_fte_actual || 0) - (p.md_fte_weekly_goal || 0);
+        const status = getStatus(p);
+        const absenceRate = (p.absence_rate || 0) * 100;
+        const utilization = (p.utilization || 0) * 100;
+
+        const row = document.createElement('tr');
+
+        // Practice name
+        const tdName = document.createElement('td');
+        tdName.className = 'practice-name';
+        tdName.textContent = p.practice_name;
+        row.appendChild(tdName);
+
+        // Status
+        const tdStatus = document.createElement('td');
+        const statusPill = document.createElement('span');
+        statusPill.className = 'status-pill ' + status.statusClass;
+        statusPill.textContent = status.label;
+        tdStatus.appendChild(statusPill);
+        row.appendChild(tdStatus);
+
+        // FTE Actual
+        const tdActual = document.createElement('td');
+        tdActual.textContent = (p.md_fte_actual || 0).toFixed(0);
+        row.appendChild(tdActual);
+
+        // FTE Goal
+        const tdGoal = document.createElement('td');
+        tdGoal.textContent = (p.md_fte_weekly_goal || 0).toFixed(2);
+        row.appendChild(tdGoal);
+
+        // Gap
+        const tdGap = document.createElement('td');
+        tdGap.style.color = gap >= 0 ? '#4ade80' : '#f87171';
+        tdGap.textContent = (gap >= 0 ? '+' : '') + gap.toFixed(1);
+        row.appendChild(tdGap);
+
+        // Vacation Hours
+        const tdVacation = document.createElement('td');
+        tdVacation.textContent = (p.vacation_hours || 0).toFixed(0);
+        row.appendChild(tdVacation);
+
+        // Sickness Hours
+        const tdSickness = document.createElement('td');
+        tdSickness.textContent = (p.sickness_hours || 0).toFixed(0);
+        row.appendChild(tdSickness);
+
+        // Absence Rate with mini bar
+        const tdAbsence = document.createElement('td');
+        const absenceCell = document.createElement('div');
+        absenceCell.className = 'bar-cell';
+
+        const absenceValue = document.createElement('div');
+        absenceValue.style.marginBottom = '4px';
+        absenceValue.textContent = absenceRate.toFixed(0) + '%';
+        absenceCell.appendChild(absenceValue);
+
+        const absenceBar = document.createElement('div');
+        absenceBar.className = 'mini-bar';
+        const absenceFill = document.createElement('div');
+        absenceFill.className = 'mini-bar-fill';
+        absenceFill.style.width = Math.min(absenceRate * 2.5, 100) + '%';
+        absenceFill.style.background = getBarColor(absenceRate, { high: 30, medium: 20, highColor: '#f87171', mediumColor: '#fbbf24', lowColor: '#4ade80' });
+        absenceBar.appendChild(absenceFill);
+        absenceCell.appendChild(absenceBar);
+
+        tdAbsence.appendChild(absenceCell);
+        row.appendChild(tdAbsence);
+
+        // Utilization with mini bar
+        const tdUtil = document.createElement('td');
+        const utilCell = document.createElement('div');
+        utilCell.className = 'bar-cell';
+
+        const utilValue = document.createElement('div');
+        utilValue.style.marginBottom = '4px';
+        utilValue.textContent = utilization.toFixed(0) + '%';
+        utilCell.appendChild(utilValue);
+
+        const utilBar = document.createElement('div');
+        utilBar.className = 'mini-bar';
+        const utilFill = document.createElement('div');
+        utilFill.className = 'mini-bar-fill';
+        utilFill.style.width = utilization + '%';
+        utilFill.style.background = utilization > 90 ? '#fbbf24' : utilization < 70 ? '#8ba3c7' : '#4ade80';
+        utilBar.appendChild(utilFill);
+        utilCell.appendChild(utilBar);
+
+        tdUtil.appendChild(utilCell);
+        row.appendChild(tdUtil);
+
+        tbody.appendChild(row);
+      });
+      table.appendChild(tbody);
+
+      // Replace container contents
+      container.replaceChildren(table);
+    }
+
+    // Load dashboard on page load
+    loadDashboard();
+  </script>
+</body>
+</html>
