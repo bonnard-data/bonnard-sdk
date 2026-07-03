@@ -1,3 +1,8 @@
+> [!IMPORTANT]
+> **This repository is archived and no longer maintained.**
+> It was part of an earlier version of Bonnard. Our current products live at **[bonnard.dev](https://bonnard.dev)**. Start with **[`@bonnard/mcp-charts`](https://github.com/bonnard-data/mcp-charts)**.
+> Questions: pierre@bonnard.dev
+
 # @bonnard/sdk
 
 TypeScript SDK for querying the [Bonnard](https://www.bonnard.dev) semantic layer from any JavaScript or TypeScript application.
